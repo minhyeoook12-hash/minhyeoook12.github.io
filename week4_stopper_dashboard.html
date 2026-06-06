@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Week 4 — Nonlinear Bump Stopper Design Advisor</title>
+<style>
+:root{--bg:#f5f7fc;--sur:#ffffff;--sur2:#eef1f8;--bdr:#d4d9ea;--tx:#1a1d2e;--tx2:#4a5068;--tx3:#8890aa;--ac:#1a56db;--ac2:#0e3fa8;--tl:#0891b2;--pass:#16a34a;--pbg:#dcfce7;--warn:#d97706;--wbg:#fef3c7;--fail:#dc2626;--fbg:#fee2e2;--r:10px;--sh:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{background:var(--bg);color:var(--tx);font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px 80px;}
+.sec{margin-top:44px;}
+.st{font-size:19px;font-weight:700;color:var(--tx);border-left:4px solid var(--ac);padding-left:12px;margin-bottom:5px;font-family:Georgia,serif;}
+.sd{color:var(--tx2);font-size:13px;margin-bottom:16px;}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);}
+.card+.card{margin-top:11px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+@media(max-width:860px){.g3{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}}
+@media(min-width:861px) and (max-width:1100px){.g3{grid-template-columns:1fr 1fr;}}
+
+/* hero */
+.hero{background:linear-gradient(135deg,#1a1d2e 0%,#1a56db 55%,#0891b2 100%);color:#fff;padding:44px 36px 36px;border-radius:14px;margin-top:26px;}
+.hero-tag{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#e0f0ff;font-family:'Consolas','Courier New',monospace;font-size:11px;letter-spacing:.1em;padding:3px 10px;border-radius:4px;margin-bottom:13px;}
+.hero h1{font-family:Georgia,serif;font-size:28px;line-height:1.25;margin-bottom:7px;}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.68);margin-bottom:16px;letter-spacing:.04em;}
+.hero-desc{font-size:13px;color:rgba(255,255,255,.84);max-width:640px;line-height:1.8;}
+.hcards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:22px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:14px 16px;}
+@media(max-width:650px){.hcards{grid-template-columns:1fr 1fr;}.hero{padding:30px 20px 24px;}.hero h1{font-size:22px;}}
+.hc-l{font-family:'Consolas','Courier New',monospace;font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.56);text-transform:uppercase;margin-bottom:2px;}
+.hc-v{font-family:Georgia,serif;font-size:21px;color:#fff;}
+.hc-u{font-size:11px;color:rgba(255,255,255,.62);margin-left:2px;}
+
+/* badge */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.bp{background:var(--pbg);color:var(--pass);}
+.bw{background:var(--wbg);color:var(--warn);}
+.bf{background:var(--fbg);color:var(--fail);}
+.ba{background:#dbeafe;color:var(--ac2);}
+.bn{background:var(--sur2);color:var(--tx2);}
+
+/* reason tags */
+.rtag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;margin-left:4px;vertical-align:middle;}
+.rtag-f{background:var(--fbg);color:var(--fail);}
+.rtag-w{background:var(--wbg);color:var(--warn);}
+
+/* form */
+.qb{margin-bottom:15px;}
+.ql{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:5px;display:flex;align-items:center;gap:7px;}
+.qn{width:21px;height:21px;background:var(--ac);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+select{width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;background:var(--sur);color:var(--tx);font-size:13px;font-family:inherit;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5068' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;}
+select:focus{outline:none;border-color:var(--ac);}
+.rbtn{width:100%;padding:12px;background:var(--ac);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px;-webkit-tap-highlight-color:transparent;}
+.rbtn:active{opacity:.85;}
+
+/* cond grid */
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:560px){.cg{grid-template-columns:1fr 1fr;}}
+.ci{background:var(--sur2);border-radius:8px;padding:10px 12px;}
+.ci-l{font-size:11px;color:var(--tx3);font-family:'Consolas',monospace;margin-bottom:2px;}
+.ci-v{font-size:14px;font-weight:700;color:var(--tx);font-family:'Consolas',monospace;}
+
+/* rec */
+.rec-box{background:linear-gradient(135deg,#eff6ff,#e0f2fe);border:1.5px solid #bfdbfe;border-radius:12px;padding:20px 24px;}
+.rec-l{font-size:11px;font-family:'Consolas',monospace;color:var(--tl);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+.rec-k3{font-family:Georgia,serif;font-size:26px;color:var(--ac2);margin-bottom:2px;}
+.rec-rng{font-size:12.5px;color:var(--tx2);}
+.rec-cmt{margin-top:12px;padding:10px 12px;background:#fff;border-radius:7px;font-size:13px;color:var(--tx2);line-height:1.7;border-left:3px solid var(--ac);}
+.wbox{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 17px;}
+.wbox h4{color:var(--warn);font-size:13px;margin-bottom:6px;}
+.wbox ul{color:var(--tx2);font-size:12.5px;padding-left:16px;}
+.wbox li{margin-bottom:3px;}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:3px;}
+.pmi{border-radius:7px;padding:9px 11px;}
+.pmi-pass{background:#f0fdf4;border:1px solid #bbf7d0;}
+.pmi-warn{background:#fffbeb;border:1px solid #fde68a;}
+.pmi-fail{background:#fef2f2;border:1px solid #fecaca;}
+.pmi-l{font-size:10px;color:var(--tx3);font-family:'Consolas',monospace;margin-bottom:2px;}
+.pmi-v{font-size:14px;font-weight:700;margin-bottom:3px;}
+.pmi-reason{font-size:10px;font-weight:600;margin-top:2px;}
+.pmi-reason-p{color:var(--pass);}
+.pmi-reason-w{color:var(--warn);}
+.pmi-reason-f{color:var(--fail);}
+
+/* chart */
+.cbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);overflow:hidden;}
+.ct{font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;}
+/* chart-wrapper: 고정 높이 컨테이너 — canvas는 100% 채움 */
+.cw{width:100%;position:relative;}
+.cw-main{height:320px;}
+.cw-diff{height:140px;margin-top:10px;}
+.cw-bar{height:200px;}
+canvas{display:block;width:100%;height:100%;}
+.tbrow{display:flex;gap:7px;margin-bottom:11px;}
+.tbbtn{padding:5px 13px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;cursor:pointer;background:var(--sur);color:var(--tx2);font-family:inherit;-webkit-tap-highlight-color:transparent;}
+.tbbtn.on{background:var(--ac);color:#fff;border-color:var(--ac);}
+.legrow{display:flex;flex-wrap:wrap;gap:11px;margin-top:9px;}
+.legi{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);}
+.legd{width:22px;height:3px;border-radius:2px;}
+/* stopper info box */
+.engage-box{padding:8px 12px;border-radius:7px;font-size:12px;margin-top:8px;}
+.engage-on{background:#eff6ff;border:1px solid #bfdbfe;color:var(--ac2);}
+.engage-off{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx2);}
+/* diff note */
+.diff-note{font-size:12px;color:var(--tl);background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 12px;margin-top:8px;}
+
+/* table */
+.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--sur2);padding:7px 10px;text-align:left;font-weight:600;color:var(--tx2);font-family:'Consolas',monospace;font-size:10.5px;border-bottom:1px solid var(--bdr);white-space:nowrap;}
+td{padding:7px 10px;border-bottom:1px solid var(--sur2);color:var(--tx);font-family:'Consolas',monospace;white-space:nowrap;font-size:12px;}
+tr.best td{background:#eff6ff;}
+tr:hover td{background:var(--sur2);}
+.status-cell{min-width:160px;}
+
+/* material */
+.mc{border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;background:var(--sur);}
+.mn{font-weight:700;color:var(--tx);font-size:14px;margin-bottom:4px;}
+.tagrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+
+/* guide */
+.glist{display:flex;flex-direction:column;gap:8px;}
+.gs{display:flex;gap:12px;align-items:flex-start;}
+.gn{width:25px;height:25px;background:var(--ac);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.gt{font-size:13px;color:var(--tx2);padding-top:3px;}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+@media(max-width:480px){.tg{grid-template-columns:1fr;}}
+.ti{background:var(--sur2);border-radius:8px;padding:10px 12px;}
+.tn{font-family:'Consolas',monospace;font-weight:700;color:var(--ac2);font-size:12.5px;margin-bottom:2px;}
+.td2{font-size:11.5px;color:var(--tx2);}
+
+/* copy button */
+.copy-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:background .15s;}
+.copy-btn:hover{background:var(--bdr);}
+.copy-btn.copied{background:var(--pbg);color:var(--pass);border-color:#bbf7d0;}
+
+/* mat detail */
+.mat-detail{background:var(--sur2);border-radius:8px;padding:14px 16px;margin-top:12px;font-size:13px;color:var(--tx2);line-height:1.85;border-left:3px solid var(--tl);}
+.mat-detail b{color:var(--tx);}
+
+/* final */
+.fnote{background:var(--sur2);border-radius:12px;padding:20px 24px;border-left:4px solid var(--tl);}
+.fnote p{font-size:13px;color:var(--tx2);margin-bottom:5px;}
+.konote{margin-top:13px;padding-top:13px;border-top:1px solid var(--bdr);font-size:13px;color:var(--tx2);}
+.div{height:1px;background:var(--bdr);margin:42px 0;}
+
+#loading{display:none;position:fixed;inset:0;background:rgba(245,247,252,.88);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:13px;}
+#loading.show{display:flex;}
+.sp{width:36px;height:36px;border:3px solid var(--bdr);border-top-color:var(--ac);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.hidden{display:none!important;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
+.mono{font-family:'Consolas','Courier New',monospace;}
+</style>
+</head>
+<body>
+<div id="loading"><div class="sp"></div><div style="font-size:13px;color:var(--tx2);">k₃ 후보 탐색 및 ODE 시뮬레이션 중…</div></div>
+
+<div class="wrap">
+
+<div class="hero">
+  <div class="hero-tag">WEEK 4 · UAV GIMBAL VIBRATION ISOLATOR</div>
+  <h1>Nonlinear Bump Stopper<br>Design Advisor</h1>
+  <div class="hero-sub">Gust Response · Impact Limitation · k₃ Auto-Search · Material Recommendation</div>
+  <div class="hero-desc">2~3주차 부드러운 방진 마운트(k₁=420 N/m, ζ=0.02)는 고주파 차단에 유리하지만, 강풍·불시착 등 순간 충격에는 변위가 과도해질 수 있습니다. 상황만 선택하면 Gap-type 비선형 스토퍼의 k₃를 자동 탐색하여 최적 설계 범위를 제안합니다.</div>
+  <div class="hcards">
+    <div><div class="hc-l">Recommended k₃</div><div class="hc-v" id="h-k3">—</div></div>
+    <div><div class="hc-l">Overall Status</div><div class="hc-v" id="h-st">—</div></div>
+    <div><div class="hc-l">Max Displacement</div><div class="hc-v" id="h-dp">—<span class="hc-u">mm</span></div></div>
+    <div><div class="hc-l">Absorption Rate</div><div class="hc-v" id="h-ab">—<span class="hc-u">%</span></div></div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div class="sec">
+  <div class="st">Quick Guide</div>
+  <div class="sd">처음 방문해도 이 순서대로 따라가면 설계 추천 결과를 확인할 수 있습니다.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="glist">
+        <div class="gs"><div class="gn">1</div><div class="gt">아래 <b>설계 상황 선택기</b>에서 Q1~Q7 항목을 선택합니다.</div></div>
+        <div class="gs"><div class="gn">2</div><div class="gt">▶ 버튼을 누르면 내부에서 <b>k₃ 후보 11개를 자동 탐색</b>하고 RK4 ODE 시뮬레이션을 수행합니다.</div></div>
+        <div class="gs"><div class="gn">3</div><div class="gt"><b>추천 k₃와 PASS/WARNING/FAIL 판정 이유</b>를 확인합니다.</div></div>
+        <div class="gs"><div class="gn">4</div><div class="gt">선형 vs 비선형 <b>충격 응답 그래프</b>를 비교합니다.</div></div>
+        <div class="gs"><div class="gn">5</div><div class="gt"><b>재료 및 구조 추천</b>을 확인하고 결과를 복사합니다.</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:var(--tx2);margin-bottom:9px;">용어 설명</div>
+      <div class="tg">
+        <div class="ti"><div class="tn">k₃ [N/m³]</div><div class="td2">Gap(x_limit)을 초과한 변위에 대해서만 추가되는 비선형 강성. 값이 클수록 스토퍼 개입이 강하지만 반력도 증가.</div></div>
+        <div class="ti"><div class="tn">x_limit [mm]</div><div class="td2">스토퍼 간극. 이 값을 초과해야 비선형 항이 활성화됨. Gap-type stopper의 물리적 간격에 해당.</div></div>
+        <div class="ti"><div class="tn">Residual RMS</div><div class="td2">충격 후 안정된 뒤 남아 있는 평균 흔들림 크기. 작을수록 빠르게 안정됨. (Impulse 후반부 기준)</div></div>
+        <div class="ti"><div class="tn">Gap-type Stopper</div><div class="td2">소프트 마운트 주변에 물리적 간극을 두고 하드 고무 링을 배치. 작은 진동은 스토퍼에 닿지 않아 평상시 방진 성능(TR&lt;0.3)을 유지.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SELECTOR -->
+<div class="sec">
+  <div class="st">Design Situation Selector</div>
+  <div class="sd">k₃를 직접 입력하지 않아도 됩니다. 상황만 선택하면 내부에서 자동 탐색합니다.</div>
+  <div class="card">
+    <div class="g2">
+      <div>
+        <div class="qb"><div class="ql"><span class="qn">1</span>고려할 상황은?</div><select id="q1"><option value="0">일반 비행 중 약한 바람</option><option value="1" selected>강풍에 의한 지속 하중</option><option value="2">착륙 시 약한 충격</option><option value="3">불시착 또는 강한 충격</option><option value="4">강풍 + 착륙 충격 모두 고려</option></select></div>
+        <div class="qb"><div class="ql"><span class="qn">2</span>설계 우선순위는?</div><select id="q2"><option value="0">최대 변위 최소화</option><option value="1">카메라 충격을 부드럽게</option><option value="2">잔류 진동 빨리 줄이기</option><option value="3" selected>변위와 충격의 균형</option><option value="4">보수적인 안전 설계</option></select></div>
+        <div class="qb"><div class="ql"><span class="qn">3</span>허용 최대 변위는?</div><select id="q3"><option value="10">10 mm 이하 (엄격)</option><option value="15">15 mm 이하</option><option value="20" selected>20 mm 이하</option><option value="25">25 mm 이하</option><option value="30">30 mm 이하 (관대)</option></select></div>
+        <div class="qb"><div class="ql"><span class="qn">4</span>카메라/짐벌 충격 민감도는?</div><select id="q4"><option value="0">매우 민감함</option><option value="1">민감함</option><option value="2" selected>보통</option><option value="3">둔감함</option><option value="4">구조적으로 튼튼하다고 가정</option></select></div>
+      </div>
+      <div>
+        <div class="qb"><div class="ql"><span class="qn">5</span>스토퍼 간극(x_limit)은?</div><select id="q5"><option value="1">1 mm — 매우 빠르게 개입</option><option value="2">2 mm — 빠르게 개입</option><option value="3" selected>3 mm — 기본값</option><option value="4">4 mm — 큰 변위에서만 개입</option><option value="5">5 mm — 최대한 늦게 개입</option></select></div>
+        <div class="qb"><div class="ql"><span class="qn">6</span>재료 선택 우선순위는?</div><select id="q6"><option value="0">부드러운 충격 흡수</option><option value="1">반복 충격 내구성</option><option value="2">경량 구조</option><option value="3">외부 환경 내구성</option><option value="4" selected>균형형</option></select></div>
+        <div class="qb"><div class="ql"><span class="qn">7</span>평상시 스토퍼가 닿지 않게 할까?</div><select id="q7"><option value="1" selected>Yes — 방진 성능 유지 (Gap-type 권장)</option><option value="0">No — 항상 접촉 구조도 허용</option></select></div>
+        <button class="rbtn" onclick="runA()">▶  k₃ 후보 탐색 및 분석 시작</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COND -->
+<div class="sec hidden" id="sc-cond">
+  <div class="st">Internal Load &amp; Limit Summary</div>
+  <div class="sd">사용자 선택이 아래 계산 조건으로 변환되었습니다.</div>
+  <div class="card"><div class="cg" id="cond-g"></div></div>
+</div>
+
+<!-- REC -->
+<div class="sec hidden" id="sc-rec">
+  <div class="st">Recommended k₃ Result</div>
+  <div class="sd">자동 탐색된 k₃ 후보 중 설계 조건을 가장 잘 만족하는 결과입니다.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
+    <div class="rec-box" style="display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div class="rec-l">Best k₃ Candidate</div>
+        <div class="rec-k3" id="r-k3">—</div>
+        <div class="rec-rng" id="r-rng">—</div>
+        <div style="margin-top:9px;" id="r-strow"></div>
+        <div class="rec-cmt" id="r-cmt">—</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div id="r-perf"></div>
+      <div class="wbox" style="flex:1;">
+        <h4>⚠ k₃가 너무 크면 안 되는 이유</h4>
+        <ul>
+          <li><b>최대 가속도 증가</b> — 스토퍼가 급격히 개입하면 카메라에 순간 충격 가속도가 오히려 커집니다.</li>
+          <li><b>스토퍼 반력 폭증</b> — k₃×(x−x_limit)³은 세제곱으로 증가하여 구조 파손 위험이 높아집니다.</li>
+          <li><b>잔류 진동 증가</b> — 지나친 경화형 스프링은 에너지를 흡수하지 못하고 되튕겨 잔류 진동이 증가합니다.</li>
+          <li><b>비선형 공진 위험</b> — Duffing 방정식 특성상 특정 k₃ 이상에서 진폭 도약(jump) 현상이 발생할 수 있습니다.</li>
+          <li><b>재료 피로 수명 단축</b> — 반복 충격 시 고응력 집중으로 고무·폼의 피로 파괴가 가속됩니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESPONSE CHART -->
+<div class="sec hidden" id="sc-chart">
+  <div class="st">Linear vs Recommended Nonlinear Response</div>
+  <div class="sd" id="chart-sd">선형 마운트(k₃=0)와 추천 비선형 스토퍼의 충격 응답을 비교합니다. 기본으로 스토퍼 효과가 뚜렷한 <b>Impulse 탭</b>이 먼저 표시됩니다.</div>
+  <div class="cbox">
+    <div class="tbrow" id="tb-row"></div>
+    <!-- 메인 응답 그래프 -->
+    <div class="cw cw-main"><canvas id="cv-resp"></canvas></div>
+    <!-- 스토퍼 개입 정보 -->
+    <div id="engage-info"></div>
+    <!-- Difference plot -->
+    <div style="font-size:11px;font-weight:600;color:var(--tx3);margin:12px 0 4px;">
+      Δx(t) = x_linear − x_nonlinear &nbsp;[mm] &nbsp;—&nbsp; 비선형 스토퍼의 변위 감소 기여
+    </div>
+    <div class="cw cw-diff"><canvas id="cv-diff"></canvas></div>
+    <!-- 차이 작을 때 안내 -->
+    <div id="diff-note"></div>
+    <!-- 범례 -->
+    <div class="legrow" id="resp-leg"></div>
+  </div>
+</div>
+
+<!-- SWEEP -->
+<div class="sec hidden" id="sc-sweep">
+  <div class="st">k₃ Candidate Sweep</div>
+  <div class="sd">11개 k₃ 후보에 대한 성능 변화입니다. 파란 막대가 추천 k₃, 적색 점선이 한계값입니다.</div>
+  <div class="g3" id="sweep-grid">
+    <div class="cbox"><div class="ct">최대 변위 (mm) vs k₃</div><div class="cw cw-bar"><canvas id="cv-disp"></canvas></div></div>
+    <div class="cbox"><div class="ct">최대 가속도 (m/s²) vs k₃</div><div class="cw cw-bar"><canvas id="cv-acc"></canvas></div></div>
+    <div class="cbox"><div class="ct">종합 Score vs k₃ (낮을수록 좋음)</div><div class="cw cw-bar"><canvas id="cv-score"></canvas></div></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="sec hidden" id="sc-tbl">
+  <div class="st">k₃ Candidate Table</div>
+  <div class="sd">점수 순 상위 후보 표입니다. 파란색 행이 추천 k₃이며, Status 열에 판정 이유가 표시됩니다.</div>
+  <div class="card twrap">
+    <table><thead><tr>
+      <th>Rank</th><th>k₃</th><th>Max Disp(mm)</th><th>Max Acc(m/s²)</th>
+      <th>RMS(mm)</th><th>Stopper F(N)</th><th>Absorption(%)</th>
+      <th>Score</th><th class="status-cell">Status &amp; 판정 이유</th>
+    </tr></thead>
+    <tbody id="ctbody"></tbody></table>
+  </div>
+</div>
+
+<!-- MATERIAL -->
+<div class="sec hidden" id="sc-mat">
+  <div class="st">Material &amp; Structure Recommendation</div>
+  <div class="sd">추천 k₃ 수준, 설계 우선순위, 재료 우선순위를 종합하여 실제 구현 가능한 재료 및 구조를 제안합니다.</div>
+  <div class="card" id="mat-main"></div>
+  <div class="g2 mt12" id="mat-cands"></div>
+  <div class="mat-detail" id="mat-detail"></div>
+  <div class="card mt12" id="mat-struct"></div>
+</div>
+
+<!-- COPY SECTION -->
+<div class="sec hidden" id="sc-copy">
+  <div class="st">결과 요약 복사</div>
+  <div class="sd">아래 버튼을 누르면 설계 결과 요약이 클립보드에 복사됩니다. 보고서나 메모에 바로 붙여넣기 할 수 있습니다.</div>
+  <div class="card">
+    <pre id="copy-preview" style="font-family:'Consolas',monospace;font-size:12px;color:var(--tx2);background:var(--sur2);border-radius:7px;padding:14px 16px;white-space:pre-wrap;line-height:1.8;margin-bottom:14px;"></pre>
+    <button class="copy-btn" id="copy-btn" onclick="copyResult()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      결과 복사하기
+    </button>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<div class="fnote">
+  <p><b>Final Design Note</b></p>
+  <p>This dashboard does not replace physical testing. It is a preliminary design advisor that helps select a reasonable nonlinear stopper range before material testing and CAD detail design. Stopper model: F_stopper = k₃ × (|x| − x_limit)³ × sign(x), active only when |x| > x_limit.</p>
+  <div class="konote"><b>초보자를 위한 결론:</b><br>이 도구는 충격 상황과 설계 조건을 선택하면 적절한 비선형 스토퍼 강성 범위와 재료·구조 후보를 제안하는 설계 보조 도구입니다. 최종 설계는 반드시 실제 재료 시험 및 구조 해석을 통해 검증하시기 바랍니다.</div>
+</div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  시스템 상수
+// ════════════════════════════════════════
+var M=0.2, K1=420, ZT=0.02;
+var omN=Math.sqrt(K1/M), cD=2*ZT*M*omN;
+var K3C=[0,1e4,2e4,5e4,1e5,2e5,5e5,1e6,2e6,5e6,1e7];
+
+var SC=[
+  {lb:'일반 비행',  fS:0.5, v0:0.3, md:'both'},
+  {lb:'강풍',       fS:2.0, v0:0.5, md:'step'},
+  {lb:'약한 착륙',  fS:1.0, v0:0.8, md:'impulse'},
+  {lb:'불시착',     fS:1.5, v0:1.5, md:'impulse'},
+  {lb:'강풍+충격',  fS:2.0, v0:1.5, md:'both'}
+];
+var PW=[
+  {lb:'변위 최소화',    w:{d:.55,a:.20,r:.15,f:.10}},
+  {lb:'충격 부드럽게',  w:{d:.15,a:.40,r:.15,f:.30}},
+  {lb:'잔류 진동 감소', w:{d:.20,a:.15,r:.45,f:.20}},
+  {lb:'균형 설계',      w:{d:.35,a:.25,r:.20,f:.20}},
+  {lb:'보수적 안전',    w:{d:.30,a:.25,r:.20,f:.25}}
+];
+var SEN=[
+  {aL:40,  fL:5 },
+  {aL:60,  fL:8 },
+  {aL:80,  fL:12},
+  {aL:120, fL:18},
+  {aL:160, fL:25}
+];
+
+// ── 전역 캐시 (리사이즈·복사 버튼용) ──
+var SIMS={}, BK=0, DL=20, XL=0.003, CM='step';
+var G_allR=[], G_dLv=20, G_aL=80, G_fL=12, G_xLmm=3;
+var G_best=null, G_sc=null, G_pw=null, G_q6=4, G_gapT=true, G_q2=3;
+var G_copyText='';
+
+// ════════════════════════════════════════
+//  Gap-type 스토퍼 수식
+//  |x| <= x_limit : 선형 스프링만
+//  |x| >  x_limit : k3*(|x|-x_limit)^3 추가
+// ════════════════════════════════════════
+function stopperF(x, k3, xLim){
+  var ax=Math.abs(x);
+  if(ax<=xLim) return K1*x;
+  var delta=ax-xLim;
+  return K1*x + k3*delta*delta*delta*(x>0?1:-1);
+}
+
+// ════════════════════════════════════════
+//  RK4
+// ════════════════════════════════════════
+function rk4(x,v,t,dt,k3,xLim,fe){
+  function d(xi,vi,ti){
+    var fk=stopperF(xi,k3,xLim), f=fe(ti), a=(f-cD*vi-fk)/M;
+    return{dx:vi,dv:a};
+  }
+  var a=d(x,v,t), b=d(x+.5*dt*a.dx,v+.5*dt*a.dv,t+.5*dt);
+  var c=d(x+.5*dt*b.dx,v+.5*dt*b.dv,t+.5*dt);
+  var e=d(x+dt*c.dx,v+dt*c.dv,t+dt);
+  return{
+    x:x+dt*(a.dx+2*b.dx+2*c.dx+e.dx)/6,
+    v:v+dt*(a.dv+2*b.dv+2*c.dv+e.dv)/6
+  };
+}
+
+function simS(k3,xLim,fS){
+  var dt=0.002, n=Math.round(5/dt)+1;
+  var x=0,v=0,t=0, xs=[],ts=[],ac=[],sf=[];
+  for(var i=0;i<n;i++){
+    var fk=stopperF(x,k3,xLim), f=t>=0.1?fS:0, a=(f-cD*v-fk)/M;
+    xs.push(x); ts.push(t); ac.push(Math.abs(a));
+    var ax=Math.abs(x), delta=ax>xLim?ax-xLim:0;
+    sf.push(k3*delta*delta*delta);
+    var r=rk4(x,v,t,dt,k3,xLim,function(tt){return tt>=0.1?fS:0;});
+    x=r.x; v=r.v; t+=dt;
+  }
+  return{ts:ts,xs:xs,ac:ac,sf:sf};
+}
+
+function simI(k3,xLim,v0){
+  var dt=0.002, n=Math.round(3/dt)+1;
+  var x=0,v=v0,t=0, xs=[],ts=[],ac=[],sf=[];
+  for(var i=0;i<n;i++){
+    var fk=stopperF(x,k3,xLim), a=(-cD*v-fk)/M;
+    xs.push(x); ts.push(t); ac.push(Math.abs(a));
+    var ax=Math.abs(x), delta=ax>xLim?ax-xLim:0;
+    sf.push(k3*delta*delta*delta);
+    var r=rk4(x,v,t,dt,k3,xLim,function(){return 0;});
+    x=r.x; v=r.v; t+=dt;
+  }
+  return{ts:ts,xs:xs,ac:ac,sf:sf};
+}
+
+// ════════════════════════════════════════
+//  지표 계산
+//  Step RMS: Impulse 시뮬의 후반부만 사용
+//  (Step 정상상태는 강풍이 계속 밀고 있어 RMS가 아닌 정상 응답)
+// ════════════════════════════════════════
+function met(sim){
+  var md=0, ma=0, mf=0, rm=0;
+
+  function procDisp(r){
+    for(var i=0;i<r.xs.length;i++){
+      if(Math.abs(r.xs[i])>md) md=Math.abs(r.xs[i]);
+      if(r.ac[i]>ma) ma=r.ac[i];
+      if(r.sf[i]>mf) mf=r.sf[i];
+    }
+  }
+  // RMS는 Impulse 후반부에서만 계산 (물리적으로 의미 있는 잔류 진동)
+  function procRMS(r, ratio){
+    var rs=Math.floor(r.xs.length*ratio), s=0;
+    for(var i=rs;i<r.xs.length;i++) s+=r.xs[i]*r.xs[i];
+    var vv=Math.sqrt(s/(r.xs.length-rs));
+    if(vv>rm) rm=vv;
+  }
+
+  if(sim.step)   procDisp(sim.step);
+  if(sim.imp)    { procDisp(sim.imp); procRMS(sim.imp, 0.60); }
+  // Step만 있을 때 RMS 대체: Step 후반부 사용 (참고용)
+  if(!sim.imp && sim.step) procRMS(sim.step, 0.80);
+
+  return{d:md*1000, a:ma, r:rm*1000, f:mf};
+}
+
+// ════════════════════════════════════════
+//  판정: 이유 문자열도 반환
+// ════════════════════════════════════════
+function jdg(m, dL, aL, fL){
+  var jd=m.d<=dL?'P':m.d<=dL*1.2?'W':'F';
+  var ja=m.a<=aL?'P':m.a<=aL*1.3?'W':'F';
+  var jf=m.f<=fL?'P':m.f<=fL*1.3?'W':'F';
+  var jr=m.r<=3.0?'P':m.r<=5.0?'W':'F';
+  var arr=[jd,ja,jf,jr];
+  var ov=arr.indexOf('F')>-1?'F':arr.indexOf('W')>-1?'W':'P';
+
+  // 판정 이유 수집
+  var fails=[], warns=[];
+  if(jd==='F') fails.push('변위 초과'); else if(jd==='W') warns.push('변위 경계');
+  if(ja==='F') fails.push('가속도 초과'); else if(ja==='W') warns.push('가속도 경계');
+  if(jf==='F') fails.push('반력 초과'); else if(jf==='W') warns.push('반력 경계');
+  if(jr==='F') fails.push('RMS 초과'); else if(jr==='W') warns.push('RMS 경계');
+
+  return{jd:jd,ja:ja,jf:jf,jr:jr,ov:ov,fails:fails,warns:warns};
+}
+
+function sc2(m, dL, aL, fL, w, p){
+  var s=w.d*Math.min(m.d/dL,3)+w.a*Math.min(m.a/aL,3)
+       +w.r*Math.min(m.r/3.0,3)+w.f*Math.min(m.f/fL,3);
+  if(p==4){
+    if(m.d>dL) s+=0.5*(m.d/dL-1);
+    if(m.a>aL) s+=0.5*(m.a/aL-1);
+    if(m.f>fL) s+=0.5*(m.f/fL-1);
+  }
+  return s;
+}
+
+// ════════════════════════════════════════
+//  Canvas 차트 엔진
+// ════════════════════════════════════════
+function pxR(){ return window.devicePixelRatio||1; }
+
+function setupCV(id){
+  var cv=document.getElementById(id); if(!cv) return null;
+  var dpr=pxR();
+  // CSS(width:100%;height:100%)로 부모가 크기 결정 → style 건드리지 않음
+  var w=cv.clientWidth||0;
+  var h=cv.clientHeight||0;
+  // clientWidth=0: 섹션이 hidden 상태이거나 아직 레이아웃 미완료
+  // → 부모 체인 위로 올라가며 실제 너비 탐색
+  if(w<10){
+    var el=cv.parentElement;
+    while(el&&w<10){w=el.clientWidth||el.offsetWidth||0;el=el.parentElement;}
+  }
+  if(h<10){
+    var el2=cv.parentElement;
+    while(el2&&h<10){h=el2.clientHeight||el2.offsetHeight||0;el2=el2.parentElement;}
+  }
+  if(w<80)  w=600;   // 최후 fallback
+  if(h<40)  h=280;
+  cv.width=w*dpr; cv.height=h*dpr;
+  var ctx=cv.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr,dpr);
+  return{ctx:ctx,W:w,H:h};
+}
+
+function niceS(lo,hi,n){
+  if(hi<=lo) hi=lo+1;
+  var rng=hi-lo, step=Math.pow(10,Math.floor(Math.log10(rng/n||1)));
+  var ns=[1,2,2.5,5,10], best=step*10;
+  ns.forEach(function(m){var s=step*m;if(rng/s<=n+1&&s<best)best=s;});
+  var res=[], s=Math.ceil(lo/best)*best;
+  while(s<=hi+1e-9){res.push(parseFloat(s.toPrecision(10)));s+=best;}
+  return res;
+}
+
+function drawLine(id, series, opt){
+  var s=setupCV(id); if(!s) return;
+  var ctx=s.ctx,W=s.W,H=s.H, pd={t:14,r:14,b:38,l:50};
+  var pw=W-pd.l-pd.r, ph=H-pd.t-pd.b;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  var ylo=1e9,yhi=-1e9;
+  series.forEach(function(sr){sr.data.forEach(function(v){if(v<ylo)ylo=v;if(v>yhi)yhi=v;});});
+  var yp=(yhi-ylo)*0.08||1; ylo-=yp; yhi+=yp;
+  var xlo=opt.x0||0, xhi=opt.x1||1;
+  function cx(x){return pd.l+pw*(x-xlo)/(xhi-xlo);}
+  function cy(y){return pd.t+ph*(1-(y-ylo)/(yhi-ylo));}
+
+  ctx.strokeStyle='#e8eaf0'; ctx.lineWidth=1;
+  niceS(ylo,yhi,5).forEach(function(y){
+    ctx.beginPath();ctx.moveTo(pd.l,cy(y));ctx.lineTo(pd.l+pw,cy(y));ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='9.5px Consolas,monospace';ctx.textAlign='right';
+    ctx.fillText(y.toFixed(1),pd.l-4,cy(y)+3.5);
+  });
+  niceS(xlo,xhi,6).forEach(function(x){
+    ctx.beginPath();ctx.moveTo(cx(x),pd.t);ctx.lineTo(cx(x),pd.t+ph);ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='9.5px Consolas,monospace';ctx.textAlign='center';
+    ctx.fillText(x.toFixed(1),cx(x),pd.t+ph+13);
+  });
+  if(opt.xl){ctx.fillStyle='#4a5068';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(opt.xl,pd.l+pw/2,H-3);}
+  if(opt.yl){ctx.save();ctx.translate(11,pd.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#4a5068';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(opt.yl,0,0);ctx.restore();}
+
+  var stride=Math.max(1,Math.floor(((series[0]&&series[0].data.length)||1)/400));
+  series.forEach(function(sr){
+    if(!sr.data||!sr.xs) return;
+    ctx.strokeStyle=sr.col||'#1a56db'; ctx.lineWidth=sr.lw||2;
+    if(sr.dash) ctx.setLineDash(sr.dash); else ctx.setLineDash([]);
+    ctx.beginPath(); var go=false;
+    for(var i=0;i<sr.data.length;i+=stride){
+      var xi=cx(sr.xs[i]), yi=cy(sr.data[i]);
+      if(!go){ctx.moveTo(xi,yi);go=true;}else ctx.lineTo(xi,yi);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  ctx.strokeStyle='#d4d9ea';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+}
+
+function drawBar(id, labels, vals, colors, opt){
+  var s=setupCV(id); if(!s) return;
+  var ctx=s.ctx,W=s.W,H=s.H, pd={t:14,r:12,b:48,l:46};
+  var pw=W-pd.l-pd.r, ph=H-pd.t-pd.b;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  var yhi=Math.max.apply(null,vals.concat([opt.lim!=null?opt.lim:0]))*1.18||1;
+  function cy(y){return pd.t+ph*(1-y/yhi);}
+  var n=labels.length, gap=pw/n, bw=gap*0.62;
+
+  niceS(0,yhi,4).forEach(function(y){
+    ctx.strokeStyle='#e8eaf0';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pd.l,cy(y));ctx.lineTo(pd.l+pw,cy(y));ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='9px Consolas,monospace';ctx.textAlign='right';
+    ctx.fillText(Number(y.toPrecision(3)),pd.l-3,cy(y)+3.5);
+  });
+  if(opt.lim!=null){
+    ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(pd.l,cy(opt.lim));ctx.lineTo(pd.l+pw,cy(opt.lim));ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#dc2626';ctx.font='9px Consolas,monospace';ctx.textAlign='left';
+    ctx.fillText('limit',pd.l+pw+2,cy(opt.lim)+3.5);
+  }
+  for(var i=0;i<n;i++){
+    ctx.fillStyle=colors[i]||'#1a56db';
+    var x=pd.l+gap*(i+0.5)-bw/2, y=cy(vals[i]), bh=pd.t+ph-y;
+    if(bh>0){ctx.beginPath();ctx.rect(x,y,bw,bh);ctx.fill();}
+    ctx.fillStyle='#4a5068';ctx.font='8.5px Consolas,monospace';ctx.textAlign='center';
+    var lb=labels[i]; if(lb.length>9)lb=lb.slice(0,9);
+    ctx.fillText(lb,pd.l+gap*(i+0.5),pd.t+ph+13);
+  }
+  if(opt.yl){ctx.save();ctx.translate(11,pd.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#4a5068';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(opt.yl,0,0);ctx.restore();}
+  ctx.strokeStyle='#d4d9ea';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+}
+
+// ════════════════════════════════════════
+//  유틸
+// ════════════════════════════════════════
+function fK3(k){
+  if(k===0) return '0 (선형)';
+  var e=Math.floor(Math.log10(Math.abs(k)));
+  var m=k/Math.pow(10,e);
+  var sup='⁰¹²³⁴⁵⁶⁷⁸⁹'.split('');
+  var es=String(e).split('').map(function(c){return sup[+c]||c;}).join('');
+  return (Math.abs(m-1)<0.01?'':m.toFixed(0))+'×10'+es;
+}
+function bdg(s){
+  var c=s==='PASS'||s==='P'?'bp':s==='WARNING'||s==='W'?'bw':'bf';
+  var t=s==='P'?'PASS':s==='W'?'WARNING':s==='F'?'FAIL':s;
+  return '<span class="badge '+c+'">'+t+'</span>';
+}
+// 판정 이유 태그 HTML
+function reasonTags(j){
+  var html='';
+  j.fails.forEach(function(r){html+='<span class="rtag rtag-f">'+r+'</span>';});
+  j.warns.forEach(function(r){html+='<span class="rtag rtag-w">'+r+'</span>';});
+  return html;
+}
+function show(id){var el=document.getElementById(id);if(el)el.classList.remove('hidden');}
+function f1(v){return(+v).toFixed(1);}
+function f2(v){return(+v).toFixed(2);}
+function f3(v){return(+v).toFixed(3);}
+
+// ════════════════════════════════════════
+//  메인 실행
+// ════════════════════════════════════════
+function runA(){document.getElementById('loading').classList.add('show');setTimeout(doA,80);}
+
+function doA(){
+  try{
+    var q1=+document.getElementById('q1').value;
+    var q2=+document.getElementById('q2').value;
+    var dLv=+document.getElementById('q3').value;
+    var q4=+document.getElementById('q4').value;
+    var xLmm=+document.getElementById('q5').value;
+    var q6=+document.getElementById('q6').value;
+    var gapT=document.getElementById('q7').value==='1';
+
+    var sc=SC[q1], pw=PW[q2], sen=SEN[q4];
+    var aL=sen.aL, fL=sen.fL, xLm=xLmm/1000;
+
+    // 전역 저장
+    DL=dLv; XL=xLm; G_dLv=dLv; G_aL=aL; G_fL=fL;
+    G_xLmm=xLmm; G_sc=sc; G_pw=pw; G_q6=q6; G_gapT=gapT; G_q2=q2;
+
+    // 조건 요약
+    var ci=[
+      {l:'Scenario',v:sc.lb},{l:'Step Force',v:sc.fS+' N'},
+      {l:'Impulse v₀',v:sc.v0+' m/s'},{l:'Disp Limit',v:dLv+' mm'},
+      {l:'Acc Limit',v:aL+' m/s²'},{l:'Force Limit',v:fL+' N'},
+      {l:'Gap (x_limit)',v:xLmm+' mm'},{l:'Mode',v:sc.md==='both'?'Step+Impulse':sc.md},
+      {l:'Priority',v:pw.lb}
+    ];
+    document.getElementById('cond-g').innerHTML=ci.map(function(x){
+      return '<div class="ci"><div class="ci-l">'+x.l+'</div><div class="ci-v">'+x.v+'</div></div>';
+    }).join('');
+
+    // ── 시뮬레이션 ──
+    SIMS={}; var linM=null, allR=[];
+
+    // 선형(k3=0) 먼저 실행해서 linM 확보
+    (function(){
+      var sim={};
+      if(sc.md==='step'||sc.md==='both')    sim.step=simS(0,xLm,sc.fS);
+      if(sc.md==='impulse'||sc.md==='both') sim.imp =simI(0,xLm,sc.v0);
+      SIMS[0]=sim; linM=met(sim);
+      linM.ab=0; linM.sc=sc2(linM,dLv,aL,fL,pw.w,q2);
+      allR.push({k3:0,m:linM,j:jdg(linM,dLv,aL,fL)});
+    })();
+
+    // 나머지 k3 후보
+    for(var i=1;i<K3C.length;i++){
+      var k3=K3C[i], sim={};
+      if(sc.md==='step'||sc.md==='both')    sim.step=simS(k3,xLm,sc.fS);
+      if(sc.md==='impulse'||sc.md==='both') sim.imp =simI(k3,xLm,sc.v0);
+      SIMS[k3]=sim;
+      var m=met(sim);
+      m.ab=Math.max(0,(linM.d-m.d)/Math.max(linM.d,1e-9)*100);
+      m.sc=sc2(m,dLv,aL,fL,pw.w,q2);
+      allR.push({k3:k3,m:m,j:jdg(m,dLv,aL,fL)});
+    }
+    G_allR=allR;
+
+    // ── 최적 k₃ 선택 ──
+    var nonlin=allR.slice(1);
+    var ps=nonlin.filter(function(r){return r.j.ov==='P';}).sort(function(a,b){return a.m.sc-b.m.sc;});
+    var ws=nonlin.filter(function(r){return r.j.ov==='W';}).sort(function(a,b){return a.m.sc-b.m.sc;});
+    var best=ps[0]||ws[0]||nonlin.sort(function(a,b){return a.m.sc-b.m.sc;})[0];
+    BK=best.k3; G_best=best;
+
+    // ── 히어로 ──
+    document.getElementById('h-k3').innerHTML=fK3(best.k3)+' <span class="hc-u">N/m³</span>';
+    document.getElementById('h-st').innerHTML=bdg(best.j.ov);
+    document.getElementById('h-dp').innerHTML=f2(best.m.d)+'<span class="hc-u">mm</span>';
+    document.getElementById('h-ab').innerHTML=f1(best.m.ab)+'<span class="hc-u">%</span>';
+
+    // ── 추천 섹션 ──
+    var bi=K3C.indexOf(best.k3);
+    var lo=bi>0?fK3(K3C[bi-1]):'—', hi2=bi<K3C.length-1?fK3(K3C[bi+1]):'—';
+    document.getElementById('r-k3').textContent=fK3(best.k3)+' N/m³';
+    document.getElementById('r-rng').textContent='추천 범위: '+lo+' ~ '+hi2+' N/m³ 사이에서 미세 조정 권장';
+    document.getElementById('r-strow').innerHTML=
+      bdg(best.j.ov)+reasonTags(best.j)+
+      ' <span style="font-size:13px;color:var(--tx2);margin-left:6px;">흡수율 '+f1(best.m.ab)+'% | Max 변위 '+f2(best.m.d)+' mm</span>';
+
+    var cmt={
+      P:'선택한 설계 조건을 모두 만족합니다. k₃='+fK3(best.k3)+' N/m³는 x_limit('+xLmm+'mm) 초과 시에만 경화형으로 작동하여 최대 변위를 '+f1(best.m.ab)+'% 줄이면서 평상시 방진 성능(TR<0.3)을 유지합니다.',
+      W:'일부 조건이 경계에 있습니다. x_limit를 줄이거나 Gap-type 구조에 추가 완충재 조합을 검토하세요.',
+      F:'현재 선택 조건에서 모든 후보가 기준을 초과합니다. 허용 변위 한계를 완화하거나 x_limit 간극을 재검토하세요.'
+    };
+    document.getElementById('r-cmt').textContent=cmt[best.j.ov];
+
+    // 성능 지표 4개 + Stopper Engagement
+    var perfItems=[
+      {lb:'Max Displacement', val:f2(best.m.d)+' mm',  jv:best.j.jd,
+       rsn:best.j.jd==='P'?'기준 이내':best.j.jd==='W'?'변위 경계':'변위 초과'},
+      {lb:'Max Acceleration',  val:f2(best.m.a)+' m/s²',jv:best.j.ja,
+       rsn:best.j.ja==='P'?'기준 이내':best.j.ja==='W'?'가속도 경계':'가속도 초과'},
+      {lb:'Residual RMS',      val:f3(best.m.r)+' mm',  jv:best.j.jr,
+       rsn:best.j.jr==='P'?'기준 이내':best.j.jr==='W'?'RMS 경계':'RMS 초과'},
+      {lb:'Stopper Force',     val:f3(best.m.f)+' N',   jv:best.j.jf,
+       rsn:best.j.jf==='P'?'기준 이내':best.j.jf==='W'?'반력 경계':'반력 초과'}
+    ];
+    // Stopper engagement 계산 (best k3 기준)
+    var engagedDisp=best.m.d;  // mm
+    var engagedXlim=xLmm;
+    var isEngaged=engagedDisp>engagedXlim;
+    var exceedMM=(engagedDisp-engagedXlim);
+    var engJv=isEngaged?'P':'W';  // engaged = PASS(정상 개입), not engaged = WARNING
+    var engRsn=isEngaged
+      ?('Exceeded gap by '+f1(exceedMM)+' mm')
+      :('max|x|('+f1(engagedDisp)+'mm) ≤ x_limit('+engagedXlim+'mm)');
+
+    document.getElementById('r-perf').innerHTML=
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">'
+      +perfItems.map(function(x){
+        var cls=x.jv==='P'?'pmi-pass':x.jv==='W'?'pmi-warn':'pmi-fail';
+        var rc=x.jv==='P'?'pmi-reason-p':x.jv==='W'?'pmi-reason-w':'pmi-reason-f';
+        return '<div class="pmi '+cls+'"><div class="pmi-l">'+x.lb+'</div>'
+              +'<div class="pmi-v">'+x.val+'</div>'
+              +bdg(x.jv)+'<div class="pmi-reason '+rc+'">'+x.rsn+'</div></div>';
+      }).join('')
+      // Stopper Engagement 박스 (2열 전체 span)
+      +'</div>'
+      +'<div style="margin-top:7px;padding:9px 12px;border-radius:7px;'
+      +(isEngaged?'background:#eff6ff;border:1px solid #bfdbfe;':'background:var(--sur2);border:1px solid var(--bdr);')
+      +'">'
+      +'<div style="font-size:10px;color:var(--tx3);font-family:Consolas,monospace;margin-bottom:2px;">STOPPER ENGAGEMENT</div>'
+      +'<div style="font-size:13px;font-weight:700;color:'+(isEngaged?'var(--ac2)':'var(--tx2)')+'">'
+      +(isEngaged?'✓ Engaged':'⚪ Not Engaged')+'</div>'
+      +'<div style="font-size:11px;color:var(--tx2);margin-top:2px;">'+engRsn+'</div>'
+      +(isEngaged?'':'<div style="font-size:10px;color:var(--tx3);margin-top:2px;">스토퍼가 개입하지 않아 선형 응답과 동일합니다.</div>')
+      +'</div>';
+
+    // ── 응답 차트 탭 ──
+    var modes=[];
+    if(sc.md==='step'||sc.md==='both')    modes.push('step');
+    if(sc.md==='impulse'||sc.md==='both') modes.push('imp');
+    // Impulse를 기본 탭으로 (스토퍼 효과가 더 뚜렷)
+    CM=(modes.indexOf('imp')>-1)?'imp':modes[0];
+    document.getElementById('tb-row').innerHTML=modes.map(function(m){
+      return '<button class="tbbtn'+(m===CM?' on':'')+'" onclick="swTab(\''+m+'\')" id="tb-'+m+'">'
+            +(m==='step'?'강풍 (Step)':'불시착 (Impulse)')+'</button>';
+    }).join('');
+    renderResp(CM);
+
+    // ── Sweep ──
+    buildSweep(allR, dLv, aL, best.k3);
+
+    // ── 테이블 (판정 이유 포함) ──
+    var sorted=allR.slice(1).sort(function(a,b){return a.m.sc-b.m.sc;}).slice(0,7);
+    document.getElementById('ctbody').innerHTML=sorted.map(function(r,i){
+      var statusCell=bdg(r.j.ov)+reasonTags(r.j);
+      return '<tr class="'+(r.k3===best.k3?'best':'')+'"><td>'+(r.k3===best.k3?'★':i+1)+'</td>'
+        +'<td>'+fK3(r.k3)+'</td><td>'+f2(r.m.d)+'</td><td>'+f2(r.m.a)+'</td>'
+        +'<td>'+f3(r.m.r)+'</td><td>'+f3(r.m.f)+'</td><td>'+f1(r.m.ab)+'%</td>'
+        +'<td>'+f3(r.m.sc)+'</td><td class="status-cell">'+statusCell+'</td></tr>';
+    }).join('');
+
+    // ── 재료 ──
+    buildMat(best, q6, gapT, xLmm, q2);
+
+    // ── 복사 텍스트 생성 ──
+    buildCopyText(best, sc, pw, dLv, aL, fL, xLmm, q6, gapT);
+
+    // 설명 문구에 추천 k3 삽입
+    var sdEl=document.getElementById('chart-sd');
+    if(sdEl) sdEl.innerHTML='선형 마운트(k₃=0)와 추천 비선형 스토퍼 <b>(k₃='+fK3(best.k3)+' N/m³)</b>의 충격 응답을 비교합니다. '
+      +'기본으로 스토퍼 효과가 뚜렷한 <b>Impulse 탭</b>이 먼저 표시됩니다.';
+
+    // 섹션을 먼저 표시한 뒤 2 프레임 후 차트 렌더
+    // (hidden→visible 직후 clientWidth=0 → 화질 깨짐 방지)
+    ['sc-cond','sc-rec','sc-chart','sc-sweep','sc-tbl','sc-mat','sc-copy'].forEach(show);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        renderResp(CM);
+        buildSweep(G_allR, G_dLv, G_aL, BK);
+      });
+    });
+
+  }catch(e){
+    alert('분석 오류: '+e.message); console.error(e);
+  }finally{
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+// ════════════════════════════════════════
+//  응답 차트 (메인 + Difference plot)
+// ════════════════════════════════════════
+function swTab(m){
+  CM=m;
+  document.querySelectorAll('.tbbtn').forEach(function(b){b.classList.remove('on');});
+  var tb=document.getElementById('tb-'+m); if(tb) tb.classList.add('on');
+  renderResp(m);
+}
+
+function drawLineFull(id, series, opt){
+  /* drawLine 확장판: peaks 점 + 텍스트 박스 지원 */
+  var s=setupCV(id); if(!s) return s;
+  var ctx=s.ctx, W=s.W, H=s.H;
+  var pd={t:20,r:16,b:38,l:52};
+  var pw=W-pd.l-pd.r, ph=H-pd.t-pd.b;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  var ylo=1e9, yhi=-1e9;
+  series.forEach(function(sr){
+    sr.data.forEach(function(v){if(v<ylo)ylo=v; if(v>yhi)yhi=v;});
+  });
+  var yp=(yhi-ylo)*0.1||1; ylo-=yp; yhi+=yp;
+  var xlo=opt.x0||0, xhi=opt.x1||1;
+  function cx(x){return pd.l+pw*(x-xlo)/(xhi-xlo);}
+  function cy(y){return pd.t+ph*(1-(y-ylo)/(yhi-ylo));}
+
+  // 격자
+  ctx.strokeStyle='#e8eaf0'; ctx.lineWidth=1;
+  niceS(ylo,yhi,5).forEach(function(y){
+    ctx.beginPath();ctx.moveTo(pd.l,cy(y));ctx.lineTo(pd.l+pw,cy(y));ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='9.5px Consolas,monospace';ctx.textAlign='right';
+    ctx.fillText(y.toFixed(1),pd.l-4,cy(y)+3.5);
+  });
+  niceS(xlo,xhi,6).forEach(function(x){
+    ctx.beginPath();ctx.moveTo(cx(x),pd.t);ctx.lineTo(cx(x),pd.t+ph);ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='9.5px Consolas,monospace';ctx.textAlign='center';
+    ctx.fillText(x.toFixed(1),cx(x),pd.t+ph+13);
+  });
+  if(opt.xl){ctx.fillStyle='#4a5068';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(opt.xl,pd.l+pw/2,H-4);}
+  if(opt.yl){ctx.save();ctx.translate(13,pd.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#4a5068';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(opt.yl,0,0);ctx.restore();}
+
+  // 데이터 라인
+  var stride=Math.max(1,Math.floor(((series[0]&&series[0].data.length)||1)/500));
+  series.forEach(function(sr){
+    if(!sr.data||!sr.xs) return;
+    ctx.strokeStyle=sr.col||'#1a56db'; ctx.lineWidth=sr.lw||2;
+    if(sr.dash) ctx.setLineDash(sr.dash); else ctx.setLineDash([]);
+    ctx.beginPath(); var go=false;
+    for(var i=0;i<sr.data.length;i+=stride){
+      var xi=cx(sr.xs[i]), yi=cy(sr.data[i]);
+      if(!go){ctx.moveTo(xi,yi);go=true;}else ctx.lineTo(xi,yi);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  // 피크 점 표시
+  if(opt.peaks){
+    opt.peaks.forEach(function(pk){
+      var px2=cx(pk.t), py2=cy(pk.v);
+      ctx.beginPath();
+      ctx.arc(px2,py2,5,0,Math.PI*2);
+      ctx.fillStyle=pk.col; ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    });
+  }
+
+  // 텍스트 박스 (Reduction 정보)
+  if(opt.infoBox){
+    var bx=pd.l+pw-4, by=pd.t+6;
+    var lines=opt.infoBox;
+    var bw2=164, bh2=lines.length*16+10;
+    ctx.fillStyle='rgba(255,255,255,.92)';
+    ctx.strokeStyle='#d4d9ea'; ctx.lineWidth=1;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(bx-bw2,by,bw2,bh2,5);
+    else ctx.rect(bx-bw2,by,bw2,bh2);
+    ctx.fill(); ctx.stroke();
+    lines.forEach(function(ln,i){
+      ctx.fillStyle=ln.c||'#4a5068';
+      ctx.font=(ln.bold?'bold ':'')+' 10px Consolas,monospace';
+      ctx.textAlign='right';
+      ctx.fillText(ln.t, bx-6, by+14+i*16);
+    });
+  }
+
+  ctx.strokeStyle='#d4d9ea';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+  return {cx:cx, cy:cy, pd:pd};
+}
+
+function drawDiffPlot(id, ts, diffMM, xLim){
+  /* Difference plot: Δx = linear - nonlinear */
+  var s=setupCV(id); if(!s) return;
+  var ctx=s.ctx, W=s.W, H=s.H;
+  var pd={t:10,r:16,b:32,l:52};
+  var pw=W-pd.l-pd.r, ph=H-pd.t-pd.b;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafbff'; ctx.fillRect(0,0,W,H);
+
+  var rawMax=Math.max.apply(null,diffMM.map(Math.abs));
+  var yhi=Math.max(rawMax*1.2, 0.5);  // 최소 ±0.5mm
+  var ylo=-yhi;
+  var xhi=ts[ts.length-1];
+  function cx(x){return pd.l+pw*(x/xhi);}
+  function cy(y){return pd.t+ph*(1-(y-ylo)/(yhi-ylo));}
+
+  // 격자
+  ctx.strokeStyle='#e8eaf0'; ctx.lineWidth=1;
+  niceS(ylo,yhi,4).forEach(function(y){
+    ctx.beginPath();ctx.moveTo(pd.l,cy(y));ctx.lineTo(pd.l+pw,cy(y));ctx.stroke();
+    ctx.fillStyle='#8890aa';ctx.font='8.5px Consolas,monospace';ctx.textAlign='right';
+    ctx.fillText(y.toFixed(2),pd.l-3,cy(y)+3);
+  });
+  niceS(0,xhi,6).forEach(function(x){
+    ctx.fillStyle='#8890aa';ctx.font='8.5px Consolas,monospace';ctx.textAlign='center';
+    ctx.fillText(x.toFixed(1),cx(x),pd.t+ph+12);
+  });
+
+  // y=0 기준선
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(pd.l,cy(0));ctx.lineTo(pd.l+pw,cy(0));ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Diff 채움 영역
+  ctx.beginPath();
+  var stride=Math.max(1,Math.floor(ts.length/400));
+  var started=false;
+  for(var i=0;i<ts.length;i+=stride){
+    if(!started){ctx.moveTo(cx(ts[i]),cy(0));started=true;}
+    ctx.lineTo(cx(ts[i]),cy(diffMM[i]));
+  }
+  ctx.lineTo(cx(ts[ts.length-1]),cy(0));
+  ctx.closePath();
+  ctx.fillStyle='rgba(14,63,168,.12)';ctx.fill();
+
+  // Diff 라인
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=1.8;ctx.setLineDash([]);
+  ctx.beginPath();started=false;
+  for(var i=0;i<ts.length;i+=stride){
+    var xi=cx(ts[i]),yi=cy(diffMM[i]);
+    if(!started){ctx.moveTo(xi,yi);started=true;}else ctx.lineTo(xi,yi);
+  }
+  ctx.stroke();
+
+  // y축 레이블
+  ctx.save();ctx.translate(13,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#4a5068';ctx.font='10px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Δx (mm)',0,0);ctx.restore();
+
+  ctx.strokeStyle='#d4d9ea';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+}
+
+function renderResp(mode){
+  var lS=SIMS[0], nS=SIMS[BK]; if(!lS||!nS) return;
+  var lR=mode==='step'?(lS.step||null):(lS.imp||null);
+  var nR=mode==='step'?(nS.step||null):(nS.imp||null);
+  if(!lR||!nR) return;
+
+  var xLmm=XL*1000, dLmm=DL, tEnd=lR.ts[lR.ts.length-1];
+  var lXmm=lR.xs.map(function(v){return v*1000;});
+  var nXmm=nR.xs.map(function(v){return v*1000;});
+
+  // 피크 계산 (절댓값 최대 기준, 0 초기화)
+  var lAbsMax=0, lPeakV=0, lPeakT=0;
+  var nAbsMax=0, nPeakV=0, nPeakT=0;
+  for(var i=0;i<lR.xs.length;i++){
+    var la=Math.abs(lXmm[i]), na=Math.abs(nXmm[i]);
+    if(la>lAbsMax){lAbsMax=la; lPeakV=lXmm[i]; lPeakT=lR.ts[i];}
+    if(na>nAbsMax){nAbsMax=na; nPeakV=nXmm[i]; nPeakT=nR.ts[i];}
+  }
+  // 길이 불일치 대비
+  var nLen=Math.min(nR.xs.length, lR.xs.length);
+  for(var i=0;i<nLen;i++){
+    var na=Math.abs(nXmm[i]);
+    if(na>nAbsMax){nAbsMax=na; nPeakV=nXmm[i]; nPeakT=nR.ts[i];}
+  }
+  var redPct=lAbsMax>0?(lAbsMax-nAbsMax)/lAbsMax*100:0;
+
+  // 메인 라인 차트
+  drawLineFull('cv-resp',[
+    {xs:lR.ts, data:lXmm, col:'#1a56db', lw:2.2},
+    {xs:nR.ts, data:nXmm, col:'#e91e63', lw:2, dash:[6,3]},
+    {xs:[0,tEnd], data:[xLmm,xLmm],   col:'#94a3b8', lw:1, dash:[4,4]},
+    {xs:[0,tEnd], data:[-xLmm,-xLmm], col:'#94a3b8', lw:1, dash:[4,4]},
+    {xs:[0,tEnd], data:[dLmm,dLmm],   col:'#dc2626', lw:1.5, dash:[2,4]}
+  ], {
+    x0:0, x1:tEnd, xl:'시간 (s)', yl:'변위 (mm)',
+    peaks:[
+      {t:lPeakT, v:lPeakV, col:'#1a56db'},
+      {t:nPeakT, v:nPeakV, col:'#e91e63'}
+    ],
+    infoBox:[
+      {t:'Linear max = '+lAbsMax.toFixed(1)+' mm', c:'#1a56db', bold:false},
+      {t:'Nonlinear max = '+nAbsMax.toFixed(1)+' mm', c:'#e91e63', bold:false},
+      {t:'Reduction = '+redPct.toFixed(1)+'%', c:'#16a34a', bold:true}
+    ]
+  });
+
+  // Stopper engagement 정보
+  var maxAbsL=lAbsMax;
+  var engaged=maxAbsL>xLmm;
+  var excess=maxAbsL-xLmm;
+  var engEl=document.getElementById('engage-info');
+  if(engEl){
+    if(engaged){
+      engEl.innerHTML='<div class="engage-box engage-on">'
+        +'<b>✓ Stopper Engaged</b> &nbsp;|&nbsp; '
+        +'max |x| = '+maxAbsL.toFixed(1)+' mm &gt; x_limit = '+xLmm.toFixed(0)+' mm &nbsp;→&nbsp; '
+        +'<b>Exceeded gap by '+excess.toFixed(1)+' mm</b> &nbsp;|&nbsp; '
+        +'스토퍼가 실제로 개입하였습니다. 그래프의 차이가 작다면 k₃ 수준이 낮기 때문입니다.'
+        +'</div>';
+    } else {
+      engEl.innerHTML='<div class="engage-box engage-off">'
+        +'⚪ <b>Stopper Not Engaged</b> &nbsp;|&nbsp; '
+        +'max |x| = '+maxAbsL.toFixed(1)+' mm ≤ x_limit = '+xLmm.toFixed(0)+' mm &nbsp;→&nbsp; '
+        +'스토퍼가 개입하지 않았습니다. 현재 하중 조건에서 선형 마운트만으로 충분합니다.'
+        +'</div>';
+    }
+  }
+
+  // Difference plot
+  var diffMM=lR.xs.map(function(v,i){return (v-nR.xs[i])*1000;});
+  drawDiffPlot('cv-diff', lR.ts, diffMM, xLmm);
+
+  // 차이 3% 이하 안내
+  var diffNote=document.getElementById('diff-note');
+  if(diffNote){
+    if(Math.abs(redPct)<3){
+      diffNote.innerHTML='<div class="diff-note">'
+        +'ℹ 현재 조건에서는 스토퍼 개입이 작아 선형 응답과 거의 동일합니다. '
+        +'이는 작은 진동에서 기존 방진 성능을 유지한다는 의미입니다. '
+        +'더 강한 충격 시나리오나 낮은 x_limit 설정에서 스토퍼 효과가 뚜렷하게 나타납니다.'
+        +'</div>';
+    } else {
+      diffNote.innerHTML='';
+    }
+  }
+
+  // 범례
+  var legEl=document.getElementById('resp-leg');
+  if(legEl){
+    legEl.innerHTML=[
+      {c:'#1a56db', d:false, l:'Linear mount (k₃=0)  — 피크: '+lAbsMax.toFixed(1)+' mm'},
+      {c:'#e91e63', d:true,  l:'Nonlinear stopper (추천 k₃='+fK3(BK)+')  — 피크: '+nAbsMax.toFixed(1)+' mm'},
+      {c:'#94a3b8', d:true,  l:'±x_limit ('+xLmm.toFixed(0)+' mm) — 스토퍼 개입 기준'},
+      {c:'#dc2626', d:true,  l:'허용 변위 한계 ('+dLmm+' mm)'},
+      {c:'#7c3aed', d:false, l:'Δx(t) = Linear−Nonlinear [mm] — Difference plot'}
+    ].map(function(it){
+      var bg=it.d
+        ?'repeating-linear-gradient(90deg,'+it.c+' 0,'+it.c+' 6px,transparent 6px,transparent 10px)'
+        :it.c;
+      return '<div class="legi"><div class="legd" style="background:'+bg+'"></div>'+it.l+'</div>';
+    }).join('');
+  }
+}
+
+// ════════════════════════════════════════
+//  Sweep 차트 (전역 캐시로 리사이즈 대응)
+// ════════════════════════════════════════
+function buildSweep(allR, dL, aL, bk){
+  var ra=allR.slice(1);
+  var labels=ra.map(function(r){
+    var e=Math.floor(Math.log10(r.k3)), m=r.k3/Math.pow(10,e);
+    return (Math.abs(m-1)<0.01?'1':m.toFixed(0))+'e'+e;
+  });
+  var cols=ra.map(function(r){return r.k3===bk?'#1a56db':'rgba(8,145,178,.4)';});
+  drawBar('cv-disp',  labels, ra.map(function(r){return r.m.d;}),  cols, {lim:dL,  yl:'mm'});
+  drawBar('cv-acc',   labels, ra.map(function(r){return r.m.a;}),  cols, {lim:aL,  yl:'m/s²'});
+  drawBar('cv-score', labels, ra.map(function(r){return r.m.sc;}), cols, {yl:'Score'});
+}
+
+// ════════════════════════════════════════
+//  재료 추천 (q2 + q6 + k3 수준 조합)
+// ════════════════════════════════════════
+function buildMat(best, q6, gapT, xLmm, q2){
+  var k3=best.k3;
+  var k3Level= k3<=2e4?'LOW':k3<=2e5?'MID':k3<=2e6?'MID-HIGH':'HIGH';
+
+  // ── 기본 재료 DB (q6 기반) ──
+  var matDB=[
+    {p:'실리콘 고무 (Shore A 20~35)', s:'저경도 폴리우레탄 폼',
+     tags:['Shore A 20~35','높은 충격 흡수','넓은 온도 범위','-50~200°C','낮은 영구 변형']},
+    {p:'마이크로셀룰러 폴리우레탄', s:'중경도 폴리우레탄 (Shore A 50~60)',
+     tags:['반복 충격 내구성 우수','경량','내마모성','장기 피로 수명','자동차 범퍼 실적']},
+    {p:'저밀도 폼 우레탄', s:'마이크로셀룰러 우레탄',
+     tags:['밀도 80~150 kg/m³','매우 경량','압축 시 경화형','저비용']},
+    {p:'EPDM 고무', s:'내후성 우레탄',
+     tags:['UV·오존 내성','-40~130°C','내수성 우수','옥외 드론 환경 적합']},
+    {p:'중경도 폴리우레탄 (Shore A 40~55)', s:'이중 경도 고무 (Dual-hardness)',
+     tags:['충격 흡수·내구성 균형','Gap-type 설계 최적','구조적 k₃ 비선형 구현']}
+  ];
+  var md=matDB[q6]||matDB[4];
+
+  // ── 설계 우선순위 × k3 수준 → 구체적 문구 ──
+  var detailMap={
+    // q2=0 변위 최소화
+    '0-LOW': '변위 최소화가 목적이나 k₃ 수준이 낮습니다. x_limit을 1~2mm로 줄여 스토퍼를 더 일찍 개입시키거나, Shore A 50 이상의 경질 고무로 교체하여 단단한 스토퍼 특성을 강화하세요. 하드 고무 링의 접촉 면적을 넓히면 k₃를 높이는 효과가 있습니다.',
+    '0-MID': '변위 최소화에 적합한 k₃ 범위입니다. 하드 고무 링 두께를 3~5mm로 설정하고, 테이퍼 각도를 15~25°로 유지하면 k₃를 현재 범위에서 안정적으로 구현할 수 있습니다. Shore A 55~65 경도의 폴리우레탄을 권장합니다.',
+    '0-MID-HIGH': 'k₃가 높아 변위 제한 효과는 크지만 가속도와 반력이 증가합니다. Shore A 60~70 경질 우레탄을 사용하고, 스토퍼 접촉면에 완충 코팅(Shore A 30 실리콘 박층)을 추가하면 초기 충격 완화와 변위 제한을 동시에 달성할 수 있습니다.',
+    '0-HIGH': 'k₃가 매우 높아 구조 파손 위험이 있습니다. 금속 스톱퍼(알루미늄 또는 스테인리스) + 완충 고무 패드 조합으로 변위를 물리적으로 한계짓고, 고무 피로 파괴 위험을 줄이세요. 반드시 반복 충격 시험(10만 회 이상)을 수행하시기 바랍니다.',
+    // q2=1 충격 부드럽게
+    '1-LOW': '부드러운 충격 흡수에 최적입니다. 실리콘 고무(Shore A 20~30)를 주재료로 하고, 스토퍼 개입 전 구간에서 댐핑 재료(점탄성 폼 또는 젤)를 추가하면 카메라 블록에 전달되는 충격을 더 완화할 수 있습니다.',
+    '1-MID': '충격을 부드럽게 흡수하면서 적정 수준의 변위 제한을 달성합니다. 저경도 실리콘(Shore A 25~35) 주 고무 + 중경도 우레탄(Shore A 45~55) 스토퍼 링 조합이 이상적입니다. 스토퍼 링에 테이퍼를 주면 급격한 개입 충격을 완화할 수 있습니다.',
+    '1-MID-HIGH': '가속도 초과 위험이 있습니다. 스토퍼 접촉면에 Shore A 20~25 실리콘 완충층을 1~2mm 추가하여 급격한 경화 개입을 완화하세요. x_limit을 현재보다 0.5~1mm 늘려 스토퍼 개입 속도를 늦추는 것도 고려하세요.',
+    '1-HIGH': 'k₃가 과도하게 높아 충격이 오히려 악화됩니다. 스토퍼 강성을 낮추고 댐핑 재료(점탄성 고무, IIR 부틸 고무)로 에너지를 흡수하는 방향으로 재설계를 권장합니다.',
+    // q2=2 잔류 진동 감소
+    '2-LOW': '잔류 진동 감소에는 감쇠 재료가 핵심입니다. 고감쇠 고무(tan δ > 0.3, 예: IIR 부틸 고무)나 점탄성 폼을 마운트 주재료로 사용하세요. k₃ 수준이 낮아 스토퍼 효과보다 재료 감쇠가 더 중요한 구간입니다.',
+    '2-MID': '잔류 진동 감소와 변위 제한의 균형이 좋습니다. 고감쇠 폴리우레탄(Shore A 35~45, tan δ 0.2~0.3)을 주재료로 하고, 스토퍼 링도 동일 재료를 사용하면 충격 흡수와 잔류 진동 감소를 동시에 달성할 수 있습니다.',
+    '2-MID-HIGH': '스토퍼 반력으로 잔류 진동이 오히려 증가할 수 있습니다. x_limit을 0.5mm 늘려 스토퍼 개입 빈도를 줄이고, 주 고무에 고감쇠 재료(IIR, CIIR)를 사용하여 잔류 진동을 줄이세요.',
+    '2-HIGH': 'k₃가 너무 커서 잔류 진동이 악화됩니다. k₃를 MID 수준으로 낮추고 감쇠 특성이 강한 재료(부틸 고무, 점탄성 우레탄)를 선택하세요.',
+    // q2=3 균형
+    '3-LOW': '균형 설계 기준으로 적정한 수준입니다. 중경도 폴리우레탄(Shore A 40~50)으로 방진과 스토퍼 기능을 동시에 담당하게 하고, Gap-type 구조로 평상시 방진 성능을 보호하세요.',
+    '3-MID': '균형 설계에 가장 적합한 k₃ 범위입니다. 중경도 폴리우레탄(Shore A 45~55)으로 주 마운트를 구성하고, 하드 고무 링(Shore A 60~65)을 x_limit 간극 위치에 배치하면 Gap-type 스토퍼를 실현할 수 있습니다. 이 조합은 UAV 짐벌에서 가장 검증된 방식입니다.',
+    '3-MID-HIGH': '균형 기준에서 약간 강한 스토퍼입니다. 하드 링 접촉면에 Shore A 30 실리콘 완충 코팅(두께 0.5~1mm)을 추가하여 가속도 피크를 낮추는 것을 권장합니다.',
+    '3-HIGH': 'k₃가 균형 설계 범위를 벗어납니다. k₃를 MID-HIGH로 낮추거나, 금속 스톱퍼 + 완충 패드 조합으로 변경하여 스토퍼 반력을 구조적으로 분산시키세요.',
+    // q2=4 보수적 안전
+    '4-LOW': '보수적 안전 설계라면 k₃가 낮아 불안합니다. x_limit을 2mm로 줄이고 스토퍼 링을 Shore A 60 이상으로 경화하거나, 금속 보조 스톱퍼를 추가하여 최악의 경우 변위를 물리적으로 차단하세요.',
+    '4-MID': '보수적 안전 설계에 적합합니다. 이중 보호 구조(1차: 고무 스토퍼, 2차: 금속 스톱퍼 +2mm 여유)를 적용하고, 10만 회 반복 충격 내구성 시험을 필수로 수행하세요.',
+    '4-MID-HIGH': '보수적 설계에 적합한 강한 스토퍼입니다. 스토퍼 반력을 구조 설계에 반영하여 마운트 프레임 강도를 확인하세요. 고무 재료는 내피로성이 높은 마이크로셀룰러 우레탄을 권장합니다.',
+    '4-HIGH': '보수적 안전을 위한 강한 스토퍼입니다. 반드시 금속 스톱퍼와 병용하고, 고무 스토퍼는 에너지 흡수용으로만 사용하세요. 정기적인 마모·피로 점검 주기를 설계에 포함시키시기 바랍니다.'
+  };
+
+  var detailKey=q2+'-'+k3Level;
+  var detailTxt=detailMap[detailKey]||'추천 k₃ 수준과 설계 우선순위에 맞는 재료 조합을 사용하세요. 실제 구현 전 재료 시험을 통해 k₃ 값을 검증하시기 바랍니다.';
+
+  var lvlLabel={LOW:'낮음 — 부드러운 스토퍼',MID:'중간 — 적정 경화형','MID-HIGH':'중-높음 — 적극 개입형',HIGH:'높음 — 강성 스토퍼'}[k3Level];
+
+  document.getElementById('mat-main').innerHTML=
+    '<div style="display:flex;gap:13px;flex-wrap:wrap;">'
+    +'<div style="flex:1;min-width:190px;">'
+    +'<div style="font-size:10px;color:var(--tx3);font-family:Consolas,monospace;margin-bottom:3px;">PRIMARY RECOMMENDATION</div>'
+    +'<div style="font-size:16px;font-weight:700;color:var(--ac2);">'+md.p+'</div>'
+    +'<div style="font-size:13px;color:var(--tx2);margin-top:2px;">보조: '+md.s+'</div>'
+    +'<div style="margin-top:8px;"><span class="badge ba">k₃ 수준: '+lvlLabel+'</span></div>'
+    +'</div>'
+    +'<div style="flex:1;min-width:190px;background:var(--sur2);border-radius:8px;padding:12px 14px;">'
+    +'<div style="font-size:12px;font-weight:600;margin-bottom:5px;">설계 파라미터 요약</div>'
+    +'<div style="font-size:12px;color:var(--tx2);line-height:2.1;font-family:Consolas,monospace;">'
+    +'추천 k₃: '+fK3(k3)+' N/m³<br>'
+    +'간극 x_limit: '+xLmm+' mm<br>'
+    +'충격 흡수율: '+f1(best.m.ab)+'%<br>'
+    +'방진 유지: '+(gapT?'Yes (Gap-type)':'조건부')
+    +'</div></div></div>';
+
+  document.getElementById('mat-cands').innerHTML=[
+    {name:md.p, tags:md.tags},
+    {name:md.s, tags:['쌍 조합 권장','Shore A 조절로 k₃ 튜닝','재료 시험 필수','x_limit 위치에 배치']}
+  ].map(function(m){
+    return '<div class="mc"><div class="mn">'+m.name+'</div>'
+          +'<div class="tagrow">'+m.tags.map(function(t){return '<span class="badge bn">'+t+'</span>';}).join('')+'</div></div>';
+  }).join('');
+
+  document.getElementById('mat-detail').innerHTML=
+    '<b>설계 우선순위별 구체적 가이드 ('+PW[q2].lb+' × '+k3Level+' k₃):</b><br>'+detailTxt;
+
+  var stxt=gapT
+    ?'<b>Gap-type Tapered Bump Stopper (권장)</b><br>'
+     +'소프트 고무(k₁ 담당) 주변에 '+xLmm+'mm 간극을 두고 하드 고무 링을 배치합니다. '
+     +'정상 비행 중에는 스토퍼가 닿지 않아 평상시 방진 성능(TR&lt;0.3)을 완전히 유지합니다. '
+     +xLmm+'mm 초과 변위가 발생할 때만 k₃ 경화 효과를 냅니다. '
+     +'<br><br>수식: F_stopper = k₃ × (|x| − '+xLmm+'mm)³ × sign(x) &nbsp;[|x| > '+xLmm+'mm 일 때만]'
+    :'<b>보조 접촉형 고무 구조</b><br>'
+     +'항상 접촉하는 보조 고무를 추가하는 방식입니다. '
+     +'⚠ 평상시 작은 진동에서도 비선형 특성이 개입되어 방진 성능이 일부 저하될 수 있습니다. '
+     +'엄격한 방진 요건(TR&lt;0.3)이 있는 경우에는 Gap-type을 강력히 권장합니다.';
+
+  document.getElementById('mat-struct').innerHTML=
+    '<div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;">구조 설계 제안</div>'
+    +'<div style="font-size:13px;color:var(--tx2);line-height:1.9;">'+stxt+'</div>'
+    +'<div style="margin-top:10px;padding:9px 12px;background:var(--sur2);border-radius:7px;font-size:12px;color:var(--tx2);">'
+    +'<b>k₃ 물리적 튜닝:</b> 하드 고무 링의 <b>접촉 면적</b>(넓을수록 k₃↑), <b>경도</b>(Shore A 높을수록 k₃↑), '
+    +'<b>테이퍼 각도</b>(작을수록 점진적 개입)로 k₃를 조절합니다. '
+    +'간극(x_limit)은 하드 링과 소프트 고무 사이 실제 물리적 거리로 설정합니다.'
+    +'</div>';
+}
+
+// ════════════════════════════════════════
+//  복사 기능
+// ════════════════════════════════════════
+function buildCopyText(best, sc, pw, dLv, aL, fL, xLmm, q6, gapT){
+  var jv=best.j.ov==='P'?'PASS':best.j.ov==='W'?'WARNING':'FAIL';
+  var matDB=['실리콘 고무 (Shore A 20~35)','마이크로셀룰러 폴리우레탄','저밀도 폼 우레탄','EPDM 고무','중경도 폴리우레탄 (Shore A 40~55)'];
+  var mat=matDB[q6]||matDB[4];
+
+  var reasons='';
+  if(best.j.fails.length>0) reasons+='\n  판정 실패 항목: '+best.j.fails.join(', ');
+  if(best.j.warns.length>0) reasons+='\n  경계 항목: '+best.j.warns.join(', ');
+
+  var txt=[
+    '[ Week 4 비선형 범프 스토퍼 설계 결과 ]',
+    '─────────────────────────────────',
+    '■ 설계 조건',
+    '  시나리오    : '+sc.lb,
+    '  설계 우선순위: '+pw.lb,
+    '  허용 변위   : '+dLv+' mm',
+    '  가속도 한계  : '+aL+' m/s²',
+    '  반력 한계   : '+fL+' N',
+    '  스토퍼 간극  : '+xLmm+' mm',
+    '─────────────────────────────────',
+    '■ 추천 설계',
+    '  추천 k₃    : '+fK3(best.k3)+' N/m³',
+    '  스토퍼 구조  : '+(gapT?'Gap-type Tapered Bump Stopper':'보조 접촉형'),
+    '─────────────────────────────────',
+    '■ 성능 결과',
+    '  최대 변위   : '+f2(best.m.d)+' mm  → '+( best.j.jd==='P'?'PASS':best.j.jd==='W'?'WARNING':'FAIL'),
+    '  최대 가속도  : '+f2(best.m.a)+' m/s² → '+(best.j.ja==='P'?'PASS':best.j.ja==='W'?'WARNING':'FAIL'),
+    '  잔류 RMS   : '+f3(best.m.r)+' mm  → '+(best.j.jr==='P'?'PASS':best.j.jr==='W'?'WARNING':'FAIL'),
+    '  스토퍼 반력  : '+f3(best.m.f)+' N   → '+(best.j.jf==='P'?'PASS':best.j.jf==='W'?'WARNING':'FAIL'),
+    '  충격 흡수율  : '+f1(best.m.ab)+'%',
+    '─────────────────────────────────',
+    '■ 종합 판정  : '+jv+reasons,
+    '─────────────────────────────────',
+    '■ 추천 재료  : '+mat,
+    '─────────────────────────────────',
+    '* 이 결과는 1-DOF 선형화 모델 기반 예비 설계 참고값입니다.',
+    '  실제 적용 전 재료 시험 및 구조 해석이 필요합니다.',
+    '  스토퍼 수식: F = k₃ × (|x| - x_limit)³ × sign(x)  (|x|>x_limit 시)'
+  ].join('\n');
+
+  G_copyText=txt;
+  document.getElementById('copy-preview').textContent=txt;
+}
+
+function copyResult(){
+  if(!G_copyText){ alert('먼저 분석을 실행해 주세요.'); return; }
+  var btn=document.getElementById('copy-btn');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(G_copyText).then(function(){
+      btn.classList.add('copied');
+      btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 복사 완료!';
+      setTimeout(function(){
+        btn.classList.remove('copied');
+        btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> 결과 복사하기';
+      },2500);
+    }).catch(function(){fallbackCopy();});
+  } else { fallbackCopy(); }
+}
+function fallbackCopy(){
+  var ta=document.createElement('textarea');
+  ta.value=G_copyText; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); alert('복사 완료!'); }
+  catch(e){ alert('복사 실패. 미리보기 텍스트를 직접 선택하여 복사해 주세요.'); }
+  document.body.removeChild(ta);
+}
+
+// ════════════════════════════════════════
+//  리사이즈 — 전역 캐시로 모든 차트 재렌더
+// ════════════════════════════════════════
+// Ctrl+휠 확대 차단
+window.addEventListener('wheel', function(e){
+  if(e.ctrlKey){ e.preventDefault(); }
+}, {passive:false});
+
+var rsT;
+function redrawAllCharts(){
+  if(BK>0){
+    renderResp(CM);
+    buildSweep(G_allR, G_dLv, G_aL, BK);
+  }
+}
+window.addEventListener('resize', function(){
+  clearTimeout(rsT);
+  rsT=setTimeout(redrawAllCharts, 150);
+});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', function(){
+    clearTimeout(rsT);
+    rsT=setTimeout(redrawAllCharts, 150);
+  });
+}
+</script>
+</body>
+</html>
